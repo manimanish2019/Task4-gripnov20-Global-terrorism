@@ -1,0 +1,470 @@
+Name-Manish Kumar Gupta
+Data Science and Business Analytics Internship
+The Sparks Foundation # 'GRIPNOV20'
+Task4:
+1.Performing ‘Exploratory Data Analysis’ on dataset ‘Global Terrorism’. 2.As a security/defense analyst, trying to find out the hot zone of terrorism. 3.What all security issues and insights we can derive by EDA?
+
+import math
+import warnings
+import numpy as np 
+import pandas as pd 
+import seaborn as sns
+import plotly.offline as py
+import plotly.graph_objs as go
+import matplotlib.pyplot as plt
+warnings.filterwarnings('ignore')
+​
+import os
+for dirname, _, filenames in os.walk('global terrorism'):
+    for filename in filenames:
+        print(os.path.join(dirname, filename))
+        
+​
+terror=pd.read_csv("D:task4.csv",encoding='ISO-8859-1')
+terror.head()
+eventid	iyear	imonth	iday	approxdate	extended	resolution	country	country_txt	region	...	addnotes	scite1	scite2	scite3	dbsource	INT_LOG	INT_IDEO	INT_MISC	INT_ANY	related
+0	1.970000e+11	1970	7	2	NaN	0	NaN	58	Dominican Republic	2	...	NaN	NaN	NaN	NaN	PGIS	0	0	0	0	NaN
+1	1.970000e+11	1970	0	0	NaN	0	NaN	130	Mexico	1	...	NaN	NaN	NaN	NaN	PGIS	0	1	1	1	NaN
+2	1.970010e+11	1970	1	0	NaN	0	NaN	160	Philippines	5	...	NaN	NaN	NaN	NaN	PGIS	-9	-9	1	1	NaN
+3	1.970010e+11	1970	1	0	NaN	0	NaN	78	Greece	8	...	NaN	NaN	NaN	NaN	PGIS	-9	-9	1	1	NaN
+4	1.970010e+11	1970	1	0	NaN	0	NaN	101	Japan	4	...	NaN	NaN	NaN	NaN	PGIS	-9	-9	1	1	NaN
+5 rows × 135 columns
+
+terror.columns
+Index(['eventid', 'iyear', 'imonth', 'iday', 'approxdate', 'extended',
+       'resolution', 'country', 'country_txt', 'region',
+       ...
+       'addnotes', 'scite1', 'scite2', 'scite3', 'dbsource', 'INT_LOG',
+       'INT_IDEO', 'INT_MISC', 'INT_ANY', 'related'],
+      dtype='object', length=135)
+terror.rename(columns={'iyear':'Year','imonth':'Month','iday':'Day','country_txt':'Country','provstate':'state',
+                       'region_txt':'Region','attacktype1_txt':'AttackType','target1':'Target','nkill':'Killed',
+                       'nwound':'Wounded','summary':'Summary','gname':'Group','targtype1_txt':'Target_type',
+                       'weaptype1_txt':'Weapon_type','motive':'Motive'},inplace=True)
+​
+terror=terror[['Year','Month','Day','Country','state','Region','city','latitude','longitude','AttackType','Killed',
+               'Wounded','Target','Summary','Group','Target_type','Weapon_type','Motive']]
+​
+# Checking the null values in data
+terror.isnull().sum()
+Year                0
+Month               0
+Day                 0
+Country             0
+state             421
+Region              0
+city              434
+latitude         4556
+longitude        4557
+AttackType          0
+Killed          10313
+Wounded         16311
+Target            636
+Summary         66129
+Group               0
+Target_type         0
+Weapon_type         0
+Motive         131130
+dtype: int64
+terror.shape
+(181691, 19)
+terror.info()
+<class 'pandas.core.frame.DataFrame'>
+RangeIndex: 181691 entries, 0 to 181690
+Data columns (total 18 columns):
+ #   Column       Non-Null Count   Dtype  
+---  ------       --------------   -----  
+ 0   Year         181691 non-null  int64  
+ 1   Month        181691 non-null  int64  
+ 2   Day          181691 non-null  int64  
+ 3   Country      181691 non-null  object 
+ 4   state        181270 non-null  object 
+ 5   Region       181691 non-null  object 
+ 6   city         181257 non-null  object 
+ 7   latitude     177135 non-null  float64
+ 8   longitude    177134 non-null  float64
+ 9   AttackType   181691 non-null  object 
+ 10  Killed       171378 non-null  float64
+ 11  Wounded      165380 non-null  float64
+ 12  Target       181055 non-null  object 
+ 13  Summary      115562 non-null  object 
+ 14  Group        181691 non-null  object 
+ 15  Target_type  181691 non-null  object 
+ 16  Weapon_type  181691 non-null  object 
+ 17  Motive       50561 non-null   object 
+dtypes: float64(4), int64(3), object(11)
+memory usage: 25.0+ MB
+terror = terror.Country.value_counts().reset_index().rename(columns={'index': 'Country Name'})
+terror.columns.values[1] = 'Count of Attacks'
+terror.head()
+Country Name	Count of Attacks
+0	Iraq	24636
+1	Pakistan	14368
+2	Afghanistan	12731
+3	India	11960
+4	Colombia	8306
+print("Country with the most attacks:",terror['Country'].value_counts().idxmax())
+print("City with the most attacks:",terror['city'].value_counts().index[1]) #as first entry is 'unknown'
+print("Region with the most attacks:",terror['Region'].value_counts().idxmax())
+print("Year with the most attacks:",terror['Year'].value_counts().idxmax())
+print("Month with the most attacks:",terror['Month'].value_counts().idxmax())
+print("Group with the most attacks:",terror['Group'].value_counts().index[1])
+print("Most Attack Types:",terror['AttackType'].value_counts().idxmax())
+Country with the most attacks: Iraq
+City with the most attacks: Baghdad
+Region with the most attacks: Middle East & North Africa
+Year with the most attacks: 2014
+Month with the most attacks: 5
+Group with the most attacks: Taliban
+Most Attack Types: Bombing/Explosion
+COUNTRY WITH MOST ATTACKS ARE LISTED ABOVE
+from wordcloud import WordCloud
+from scipy import signal
+cities = terror.state.dropna(False)
+plt.subplots(figsize=(10,10))
+wordcloud = WordCloud(background_color = 'white',
+                     width = 512,
+                     height = 384).generate(' '.join(cities))
+plt.axis('off')
+plt.imshow(wordcloud)
+plt.show()
+
+terror['Year'].value_counts(dropna = False).sort_index()
+1970      651
+1971      471
+1972      568
+1973      473
+1974      581
+1975      740
+1976      923
+1977     1319
+1978     1526
+1979     2662
+1980     2662
+1981     2586
+1982     2544
+1983     2870
+1984     3495
+1985     2915
+1986     2860
+1987     3183
+1988     3721
+1989     4324
+1990     3887
+1991     4683
+1992     5071
+1994     3456
+1995     3081
+1996     3058
+1997     3197
+1998      934
+1999     1395
+2000     1814
+2001     1906
+2002     1333
+2003     1278
+2004     1166
+2005     2017
+2006     2758
+2007     3242
+2008     4805
+2009     4721
+2010     4826
+2011     5076
+2012     8522
+2013    12036
+2014    16903
+2015    14965
+2016    13587
+2017    10900
+Name: Year, dtype: int64
+x_year = terror['Year'].unique()
+y_count_years = terror['Year'].value_counts(dropna = False).sort_index()
+plt.figure(figsize = (18,10))
+sns.barplot(x = x_year,
+           y = y_count_years,
+           palette = 'rocket')
+plt.xticks(rotation = 45)
+plt.xlabel('Attack Year')
+plt.ylabel('Number of Attacks each year')
+plt.title('Attack_of_Years')
+plt.show()
+
+MAXIMUM NUMBER OF ATTACK HAPPENED IN 2014
+plt.subplots(figsize=(15,6))
+sns.countplot('Year',data=terror,palette='RdYlGn_r',edgecolor=sns.color_palette("YlOrBr", 10))
+plt.xticks(rotation=45)
+plt.title('Number Of Terrorist Activities Each Year')
+plt.show()
+​
+
+pd.crosstab(terror.Year, terror.Region).plot(kind='area',figsize=(15,6))
+plt.title('Terrorist Activities by Region in each Year')
+plt.ylabel('Number of Attacks')
+plt.show()
+​
+
+terror['Wounded'] = terror['Wounded'].fillna(0).astype(int)
+terror['Killed'] = terror['Killed'].fillna(0).astype(int)
+terror['casualities'] = terror['Killed'] + terror['Wounded']
+​
+terror1 = terror.sort_values(by='casualities',ascending=False)[:40]
+​
+heat=terror1.pivot_table(index='Country',columns='Year',values='casualities')
+heat.fillna(0,inplace=True)
+heat.head()
+Year	1982	1984	1992	1994	1995	1996	1997	1998	2001	2004	2005	2006	2007	2008	2009	2014	2015	2016	2017
+Country																			
+Afghanistan	0.0	0.0	0.0	0.0	0.0	0.0	0.0	0.0	0.0	0.0	0.0	0.0	0.0	0.0	0.0	0.0	536.0	0.0	584.0
+Chad	0.0	0.0	0.0	0.0	0.0	0.0	0.0	0.0	0.0	0.0	0.0	0.0	0.0	1161.0	0.0	0.0	0.0	0.0	0.0
+Ethiopia	0.0	0.0	500.0	0.0	0.0	0.0	0.0	0.0	0.0	0.0	0.0	0.0	0.0	0.0	0.0	0.0	0.0	0.0	0.0
+France	0.0	0.0	0.0	0.0	0.0	0.0	0.0	0.0	0.0	0.0	0.0	0.0	0.0	0.0	0.0	0.0	0.0	520.0	0.0
+India	0.0	0.0	0.0	0.0	0.0	0.0	0.0	0.0	0.0	0.0	0.0	1005.0	0.0	0.0	0.0	0.0	0.0	0.0	0.0
+import plotly.offline as py
+py.init_notebook_mode(connected=True)
+import plotly.graph_objs as go
+colorscale = [[0, '#edf8fb'], [.3, '#00BFFF'],  [.6, '#8856a7'],  [1, '#810f7c']]
+heatmap = go.Heatmap(z=heat.values, x=heat.columns, y=heat.index, colorscale=colorscale)
+data = [heatmap]
+layout = go.Layout(
+    title='Top 40 Worst Terror Attacks in History from 1982 to 2016',
+    xaxis = dict(ticks='', nticks=20),
+    yaxis = dict(ticks='')
+)
+fig = go.Figure(data=data, layout=layout)
+py.iplot(fig, filename='heatmap',show_link=False)
+​
+terror.Country.value_counts()[:15]
+Iraq              24636
+Pakistan          14368
+Afghanistan       12731
+India             11960
+Colombia           8306
+Philippines        6908
+Peru               6096
+El Salvador        5320
+United Kingdom     5235
+Turkey             4292
+Somalia            4142
+Nigeria            3907
+Thailand           3849
+Yemen              3347
+Spain              3249
+Name: Country, dtype: int64
+plt.subplots(figsize=(15,6))
+sns.barplot(terror['Country'].value_counts()[:15].index,terror['Country'].value_counts()[:15].values,palette='Blues_d')
+plt.title('Top Countries Affected')
+plt.xlabel('Countries')
+plt.ylabel('Count')
+plt.xticks(rotation= 90)
+plt.show()
+
+Iraq has been affected the most
+import folium
+from folium.plugins import MarkerCluster 
+filterYear = terror['Year'] == 1970
+filterData = terror[filterYear] # filter data
+# filterData.info()
+reqFilterData = filterData.loc[:,'city':'longitude'] #We are getting the required fields
+reqFilterData = reqFilterData.dropna() # drop NaN values in latitude and longitude
+reqFilterDataList = reqFilterData.values.tolist()
+# reqFilterDataList
+map = folium.Map(location = [0, 30], tiles='CartoDB positron', zoom_start=2)
+# clustered marker
+markerCluster = folium.plugins.MarkerCluster().add_to(map)
+for point in range(0, len(reqFilterDataList)):
+    folium.Marker(location=[reqFilterDataList[point][1],reqFilterDataList[point][2]],
+                  popup = reqFilterDataList[point][0]).add_to(markerCluster)
+map
+Make this Notebook Trusted to load map: File -> Trust Notebook
+terror.Group.value_counts()[1:15]
+Taliban                                             7478
+Islamic State of Iraq and the Levant (ISIL)         5613
+Shining Path (SL)                                   4555
+Farabundo Marti National Liberation Front (FMLN)    3351
+Al-Shabaab                                          3288
+New People's Army (NPA)                             2772
+Irish Republican Army (IRA)                         2671
+Revolutionary Armed Forces of Colombia (FARC)       2487
+Boko Haram                                          2418
+Kurdistan Workers' Party (PKK)                      2310
+Basque Fatherland and Freedom (ETA)                 2024
+Communist Party of India - Maoist (CPI-Maoist)      1878
+Maoists                                             1630
+Liberation Tigers of Tamil Eelam (LTTE)             1606
+Name: Group, dtype: int64
+test = terror[terror.Group.isin(['Shining Path (SL)','Taliban','Islamic State of Iraq and the Levant (ISIL)'])]
+​
+test.Country.unique()
+array(['Peru', 'Bolivia', 'Colombia', 'Argentina', 'Brazil', 'Mexico',
+       'Afghanistan', 'Pakistan', 'Syria', 'Iraq', 'Turkey', 'Tunisia',
+       'Lebanon', 'Turkmenistan', 'Israel', 'Belgium', 'Egypt', 'Libya',
+       'Saudi Arabia', 'West Bank and Gaza Strip', 'France', 'Bahrain',
+       'Jordan', 'Somalia', 'Germany', 'Yemen', 'Philippines', 'Malaysia',
+       'Indonesia', 'Russia', 'Georgia', 'United Kingdom', 'Iran',
+       'Australia'], dtype=object)
+terror_df_group = terror.dropna(subset=['latitude','longitude'])
+terror_df_group = terror_df_group.drop_duplicates(subset=['Country','Group'])
+terrorist_groups = terror.Group.value_counts()[1:8].index.tolist()
+terror_df_group = terror_df_group.loc[terror_df_group.Group.isin(terrorist_groups)]
+print(terror_df_group.Group.unique())
+["New People's Army (NPA)" 'Irish Republican Army (IRA)'
+ 'Shining Path (SL)' 'Farabundo Marti National Liberation Front (FMLN)'
+ 'Taliban' 'Al-Shabaab' 'Islamic State of Iraq and the Levant (ISIL)']
+map = folium.Map(location=[20, 0], tiles="CartoDB positron", zoom_start=2)
+markerCluster = folium.plugins.MarkerCluster().add_to(map)
+for i in range(0,len(terror_df_group)):
+    folium.Marker([terror_df_group.iloc[i]['latitude'],terror_df_group.iloc[i]['longitude']], 
+                  popup='Group:{}<br>Country:{}'.format(terror_df_group.iloc[i]['Group'], 
+                  terror_df_group.iloc[i]['Country'])).add_to(map)
+map
+Make this Notebook Trusted to load map: File -> Trust Notebook
+m1 = folium.Map(location=[20, 0], tiles="CartoDB positron", zoom_start=2)
+marker_cluster = MarkerCluster(
+    name='clustered icons',
+    overlay=True,
+    control=False,
+    icon_create_function=None
+)
+for i in range(0,len(terror_df_group)):
+    marker=folium.Marker([terror_df_group.iloc[i]['latitude'],terror_df_group.iloc[i]['longitude']]) 
+    popup='Group:{}<br>Country:{}'.format(terror_df_group.iloc[i]['Group'],
+                                          terror_df_group.iloc[i]['Country'])
+    folium.Popup(popup).add_to(marker)
+    marker_cluster.add_child(marker)
+marker_cluster.add_to(m1)
+folium.TileLayer('openstreetmap').add_to(m1)
+folium.TileLayer('Mapbox Bright').add_to(m1)
+folium.TileLayer('cartodbdark_matter').add_to(m1)
+folium.TileLayer('stamentoner').add_to(m1)
+folium.LayerControl().add_to(m1)
+​
+m1
+Make this Notebook Trusted to load map: File -> Trust Notebook
+terror.head()
+Year	Month	Day	Country	state	Region	city	latitude	longitude	AttackType	Killed	Wounded	Target	Summary	Group	Target_type	Weapon_type	Motive	casualities
+0	1970	7	2	Dominican Republic	NaN	Central America & Caribbean	Santo Domingo	18.456792	-69.951164	Assassination	1	0	Julio Guzman	NaN	MANO-D	Private Citizens & Property	Unknown	NaN	1
+1	1970	0	0	Mexico	Federal	North America	Mexico city	19.371887	-99.086624	Hostage Taking (Kidnapping)	0	0	Nadine Chaval, daughter	NaN	23rd of September Communist League	Government (Diplomatic)	Unknown	NaN	0
+2	1970	1	0	Philippines	Tarlac	Southeast Asia	Unknown	15.478598	120.599741	Assassination	1	0	Employee	NaN	Unknown	Journalists & Media	Unknown	NaN	1
+3	1970	1	0	Greece	Attica	Western Europe	Athens	37.997490	23.762728	Bombing/Explosion	0	0	U.S. Embassy	NaN	Unknown	Government (Diplomatic)	Explosives	NaN	0
+4	1970	1	0	Japan	Fukouka	East Asia	Fukouka	33.580412	130.396361	Facility/Infrastructure Attack	0	0	U.S. Consulate	NaN	Unknown	Government (Diplomatic)	Incendiary	NaN	0
+# Total Number of people killed in terror attack
+killData = terror.loc[:,'Killed']
+print('Number of people killed by terror attack:', int(sum(killData.dropna())))# drop the NaN values
+Number of people killed by terror attack: 411868
+# Let's look at what types of attacks these deaths were made of.
+attackData = terror.loc[:,'AttackType']
+# attackData
+typeKillData = pd.concat([attackData, killData], axis=1)
+typeKillData.head()
+AttackType	Killed
+0	Assassination	1
+1	Hostage Taking (Kidnapping)	0
+2	Assassination	1
+3	Bombing/Explosion	0
+4	Facility/Infrastructure Attack	0
+typeKillFormatData = typeKillData.pivot_table(columns='AttackType', values='Killed', aggfunc='sum')
+typeKillFormatData
+AttackType	Armed Assault	Assassination	Bombing/Explosion	Facility/Infrastructure Attack	Hijacking	Hostage Taking (Barricade Incident)	Hostage Taking (Kidnapping)	Unarmed Assault	Unknown
+Killed	160297	24920	157321	3642	3718	4478	24231	880	32381
+MAXIMUM NUMBER OF PEOPLE KILLED BY ARMED ASSAULT
+typeKillFormatData.info()
+<class 'pandas.core.frame.DataFrame'>
+Index: 1 entries, Killed to Killed
+Data columns (total 9 columns):
+ #   Column                               Non-Null Count  Dtype
+---  ------                               --------------  -----
+ 0   Armed Assault                        1 non-null      int32
+ 1   Assassination                        1 non-null      int32
+ 2   Bombing/Explosion                    1 non-null      int32
+ 3   Facility/Infrastructure Attack       1 non-null      int32
+ 4   Hijacking                            1 non-null      int32
+ 5   Hostage Taking (Barricade Incident)  1 non-null      int32
+ 6   Hostage Taking (Kidnapping)          1 non-null      int32
+ 7   Unarmed Assault                      1 non-null      int32
+ 8   Unknown                              1 non-null      int32
+dtypes: int32(9)
+memory usage: 44.0+ bytes
+labels = typeKillFormatData.columns.tolist() # convert line to list
+transpoze = typeKillFormatData.T # transpoze
+values = transpoze.values.tolist()
+fig, ax = plt.subplots(figsize=(20, 20), subplot_kw=dict(aspect="equal"))
+plt.pie(values, startangle=90, autopct='%.2f%%')
+plt.title('Types of terrorist attacks that cause deaths')
+plt.legend(labels, loc='upper right', bbox_to_anchor = (1.3, 0.9), fontsize=15) # location legend
+plt.show()
+​
+
+BOMBING AND EXPLOSION HAS LEAD TO MOST DEATH
+#Number of Killed in Terrorist Attacks by Countries
+countryData = terror.loc[:,'Country']
+# countyData
+countryKillData = pd.concat([countryData, killData], axis=1)
+​
+countryKillFormatData = countryKillData.pivot_table(columns='Country', values='Killed', aggfunc='sum')
+countryKillFormatData
+Country	Afghanistan	Albania	Algeria	Andorra	Angola	Antigua and Barbuda	Argentina	Armenia	Australia	Austria	...	Vietnam	Wallis and Futuna	West Bank and Gaza Strip	West Germany (FRG)	Western Sahara	Yemen	Yugoslavia	Zaire	Zambia	Zimbabwe
+Killed	39384	42	11066	0	3043	0	490	37	23	30	...	1	0	1500	97	1	8776	119	324	70	154
+1 rows × 205 columns
+
+MAXIMUM NUMBER OF PEOPLE WERE KILLED IN AFGHANISTAN
+fig_size = plt.rcParams["figure.figsize"]
+fig_size[0]=25
+fig_size[1]=25
+plt.rcParams["figure.figsize"] = fig_size
+labels = countryKillFormatData.columns.tolist()
+labels = labels[:50] #50 bar provides nice view
+index = np.arange(len(labels))
+transpoze = countryKillFormatData.T
+values = transpoze.values.tolist()
+values = values[:50]
+values = [int(i[0]) for i in values] # convert float to int
+colors = ['red', 'green', 'blue', 'purple', 'yellow', 'brown', 'black', 'gray', 'magenta', 'orange'] # color list for bar chart bar color 
+fig, ax = plt.subplots(1, 1)
+ax.yaxis.grid(True)
+fig_size = plt.rcParams["figure.figsize"]
+fig_size[0]=25
+fig_size[1]=25
+plt.rcParams["figure.figsize"] = fig_size
+plt.bar(index, values, color = colors, width = 0.9)
+plt.ylabel('Killed People', fontsize=20)
+plt.xlabel('Countries', fontsize = 20)
+plt.xticks(index, labels, fontsize=18, rotation=90)
+plt.title('Number of people killed by countries', fontsize = 20)
+# print(fig_size)
+plt.show()
+
+labels = countryKillFormatData.columns.tolist()
+labels = labels[50:101]
+index = np.arange(len(labels))
+transpoze = countryKillFormatData.T
+values = transpoze.values.tolist()
+values = values[50:101]
+values = [int(i[0]) for i in values]
+colors = ['red', 'green', 'blue', 'purple', 'yellow', 'brown', 'black', 'gray', 'magenta', 'orange']
+fig, ax = plt.subplots(1, 1)
+ax.yaxis.grid(True)
+fig_size = plt.rcParams["figure.figsize"]
+fig_size[0]=20
+fig_size[1]=20
+plt.rcParams["figure.figsize"] = fig_size
+plt.bar(index, values, color = colors, width = 0.9)
+plt.ylabel('Killed People', fontsize=20)
+plt.xlabel('Countries', fontsize = 20)
+plt.xticks(index, labels, fontsize=18, rotation=90)
+plt.title('Number of people killed by countries', fontsize = 20)
+plt.show()
+
+CONCLUSION:
+1) Mostly Asian countries like Iraq,Pakistan,Afganistan,India and more faced terrorist attacks
+
+2) Almost 54.9% attacks are faced by top 10 mostly attacked countries have of total world's count of attacks. Iraq having 24.7% attacks in world and "India" has 12% attacks
+
+3) Top Target places used for attacks are Private Citizens & Property, Military, Police, Government and Business.
+
+4) Mostly (Explosives, Firearms, Incendiary and Melee) weapons are used for terrorist attack
+
+5) From 2012, there is a sudden rise in terrorism, with 2014 having most number of terrorist attacks in world.
+
+Thank You !
+​
